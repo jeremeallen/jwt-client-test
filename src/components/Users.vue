@@ -7,6 +7,7 @@
     </ul>
     <button @click='getUsers'>Get users</button>
     <button @click="$router.push('/login')">Login</button>
+    <button @click="$emit('logout')">Logout</button>
   </div>
 </template>
 <script>

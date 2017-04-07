@@ -2,6 +2,7 @@
   <div id="app">
     <router-view
       @loggedIn='loggedIn'
+      @logout='logout'
       :config='config'
     >
     </router-view>
@@ -14,7 +15,6 @@ export default {
   data() {
     return {
       token: '',
-      token2: '',
     };
   },
   computed: {
@@ -30,10 +30,18 @@ export default {
     loggedIn(token) {
       this.token = token;
     },
+    logout() {
+      this.token = '';
+      this.$router.push('/login');
+    },
+    forceLogin() {
+      this.token = '';
+      this.$router.push('/login');
+    },
   },
   watch: {
     token() {
-      if (this.token) {
+      if (this.token.length) {
         this.$axios.interceptors.request.use((config) => {
           const currentConfig = config;
           currentConfig.headers.Authorization = `Bearer ${this.token}`;
@@ -50,8 +58,22 @@ export default {
           this.token = headers.authorization.replace(/Bearer /i, '');
         }
       }
+
+      if (response.data.status === 400 && response.data.data === 'token_not_provided') {
+        this.forceLogin();
+      }
+
       return response;
-    }, error => Promise.reject(error));
+    }, (error) => {
+      if (error.response.status === 400) {
+        this.forceLogin();
+      }
+
+      if (error.response.status === 401 && error.response.data.error === 'token_expired') {
+        this.forceLogin();
+      }
+      return Promise.reject(error);
+    });
   },
 };
 </script>
